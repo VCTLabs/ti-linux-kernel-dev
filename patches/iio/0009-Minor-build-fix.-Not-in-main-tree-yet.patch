@@ -1,0 +1,25 @@
+From 9e966dafd47cd2959827c087ad964f3497fc8a00 Mon Sep 17 00:00:00 2001
+From: Jonathan Cameron <jic23@kernel.org>
+Date: Mon, 6 Jun 2016 19:08:31 +0100
+Subject: [PATCH 09/10] Minor build fix.  Not in main tree yet.
+
+Signed-off-by: Jonathan Cameron <jic23@kernel.org>
+---
+ drivers/iio/industrialio-core.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
+index e6319a9..ae246ad 100644
+--- a/drivers/iio/industrialio-core.c
++++ b/drivers/iio/industrialio-core.c
+@@ -1076,6 +1076,7 @@ struct device_type iio_device_type = {
+ 	.name = "iio_device",
+ 	.release = iio_dev_release,
+ };
++EXPORT_SYMBOL_GPL(iio_device_type);
+ 
+ /**
+  * iio_device_alloc() - allocate an iio_dev from a driver
+-- 
+2.8.1
+

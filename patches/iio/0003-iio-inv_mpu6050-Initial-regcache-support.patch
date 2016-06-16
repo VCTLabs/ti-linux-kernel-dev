@@ -1,0 +1,115 @@
+From a90fa0c4dbb81a1b3ec0e41851c44ee9a828bb6a Mon Sep 17 00:00:00 2001
+From: Crestez Dan Leonard <leonard.crestez@intel.com>
+Date: Wed, 18 May 2016 18:00:49 +0300
+Subject: [PATCH 03/10] iio: inv_mpu6050: Initial regcache support
+
+Signed-off-by: Crestez Dan Leonard <leonard.crestez@intel.com>
+Signed-off-by: Jonathan Cameron <jic23@kernel.org>
+---
+ drivers/iio/imu/inv_mpu6050/inv_mpu_core.c | 47 ++++++++++++++++++++++++++++++
+ drivers/iio/imu/inv_mpu6050/inv_mpu_i2c.c  |  4 ---
+ drivers/iio/imu/inv_mpu6050/inv_mpu_iio.h  |  1 +
+ drivers/iio/imu/inv_mpu6050/inv_mpu_spi.c  |  5 ----
+ 4 files changed, 48 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/iio/imu/inv_mpu6050/inv_mpu_core.c b/drivers/iio/imu/inv_mpu6050/inv_mpu_core.c
+index ee40dae..7a1c11e 100644
+--- a/drivers/iio/imu/inv_mpu6050/inv_mpu_core.c
++++ b/drivers/iio/imu/inv_mpu6050/inv_mpu_core.c
+@@ -115,6 +115,53 @@ static const struct inv_mpu6050_hw hw_info[] = {
+ 	},
+ };
+ 
++static bool inv_mpu6050_volatile_reg(struct device *dev, unsigned int reg)
++{
++	if (reg >= INV_MPU6050_REG_RAW_ACCEL && reg < INV_MPU6050_REG_RAW_ACCEL + 6)
++		return true;
++	if (reg >= INV_MPU6050_REG_RAW_GYRO && reg < INV_MPU6050_REG_RAW_GYRO + 6)
++		return true;
++	switch (reg) {
++	case INV_MPU6050_REG_TEMPERATURE:
++	case INV_MPU6050_REG_TEMPERATURE + 1:
++	case INV_MPU6050_REG_USER_CTRL:
++	case INV_MPU6050_REG_PWR_MGMT_1:
++	case INV_MPU6050_REG_FIFO_COUNT_H:
++	case INV_MPU6050_REG_FIFO_COUNT_H + 1:
++	case INV_MPU6050_REG_FIFO_R_W:
++		return true;
++	default:
++		return false;
++	}
++}
++
++static bool inv_mpu6050_precious_reg(struct device *dev, unsigned int reg)
++{
++	switch (reg) {
++	case INV_MPU6050_REG_FIFO_R_W:
++		return true;
++	default:
++		return false;
++	}
++}
++
++/*
++ * Common regmap config for inv_mpu devices
++ *
++ * The current volatile/precious registers are common among supported devices.
++ * When that changes the volatile/precious callbacks should go through the
++ * inv_mpu6050_reg_map structs.
++ */
++const struct regmap_config inv_mpu_regmap_config = {
++	.reg_bits = 8,
++	.val_bits = 8,
++
++	.cache_type = REGCACHE_RBTREE,
++	.volatile_reg = inv_mpu6050_volatile_reg,
++	.precious_reg = inv_mpu6050_precious_reg,
++};
++EXPORT_SYMBOL_GPL(inv_mpu_regmap_config);
++
+ int inv_mpu6050_switch_engine(struct inv_mpu6050_state *st, bool en, u32 mask)
+ {
+ 	unsigned int d, mgmt_1;
+diff --git a/drivers/iio/imu/inv_mpu6050/inv_mpu_i2c.c b/drivers/iio/imu/inv_mpu6050/inv_mpu_i2c.c
+index e1fd7fa..bc3f60a 100644
+--- a/drivers/iio/imu/inv_mpu6050/inv_mpu_i2c.c
++++ b/drivers/iio/imu/inv_mpu6050/inv_mpu_i2c.c
+@@ -19,10 +19,6 @@
+ #include <linux/module.h>
+ #include "inv_mpu_iio.h"
+ 
+-static const struct regmap_config inv_mpu_regmap_config = {
+-	.reg_bits = 8,
+-	.val_bits = 8,
+-};
+ 
+ static int inv_mpu6050_select_bypass(struct i2c_mux_core *muxc, u32 chan_id)
+ {
+diff --git a/drivers/iio/imu/inv_mpu6050/inv_mpu_iio.h b/drivers/iio/imu/inv_mpu6050/inv_mpu_iio.h
+index 3bf8544c..0a2c369 100644
+--- a/drivers/iio/imu/inv_mpu6050/inv_mpu_iio.h
++++ b/drivers/iio/imu/inv_mpu6050/inv_mpu_iio.h
+@@ -292,3 +292,4 @@ int inv_mpu_core_probe(struct regmap *regmap, int irq, const char *name,
+ int inv_mpu_core_remove(struct device *dev);
+ int inv_mpu6050_set_power_itg(struct inv_mpu6050_state *st, bool power_on);
+ extern const struct dev_pm_ops inv_mpu_pmops;
++extern const struct regmap_config inv_mpu_regmap_config;
+diff --git a/drivers/iio/imu/inv_mpu6050/inv_mpu_spi.c b/drivers/iio/imu/inv_mpu6050/inv_mpu_spi.c
+index 190a4a5..b3bd977 100644
+--- a/drivers/iio/imu/inv_mpu6050/inv_mpu_spi.c
++++ b/drivers/iio/imu/inv_mpu6050/inv_mpu_spi.c
+@@ -17,11 +17,6 @@
+ #include <linux/iio/iio.h>
+ #include "inv_mpu_iio.h"
+ 
+-static const struct regmap_config inv_mpu_regmap_config = {
+-	.reg_bits = 8,
+-	.val_bits = 8,
+-};
+-
+ static int inv_mpu_i2c_disable(struct iio_dev *indio_dev)
+ {
+ 	struct inv_mpu6050_state *st = iio_priv(indio_dev);
+-- 
+2.8.1
+
