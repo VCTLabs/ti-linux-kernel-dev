@@ -942,6 +942,28 @@ beaglebone () {
 		cleanup
 	fi
 
+	echo "dir: iio"
+	#regenerate="enable"
+	if [ "x${regenerate}" = "xenable" ] ; then
+		start_cleanup
+	fi
+
+	${git} "${DIR}/patches/iio/0001-4.4.11-ti-r29-rcn-ee_defconfig.patch"
+	${git} "${DIR}/patches/iio/0002-iio-inv_mpu6050-Do-burst-reads-using-spi-i2c-directl.patch"
+	${git} "${DIR}/patches/iio/0003-iio-inv_mpu6050-Initial-regcache-support.patch"
+	${git} "${DIR}/patches/iio/0004-iio-inv_mpu6050-Only-toggle-DATA_RDY_EN-in-inv_reset.patch"
+	${git} "${DIR}/patches/iio/0005-iio-inv_mpu6050-Cache-non-volatile-bits-of-user_ctrl.patch"
+	${git} "${DIR}/patches/iio/0006-iio-inv_mpu6050-Add-support-for-auxiliary-I2C-master.patch"
+	${git} "${DIR}/patches/iio/0007-iio-inv_mpu6050-Reformat-sample-for-active-scan-mask.patch"
+	${git} "${DIR}/patches/iio/0008-iio-inv_mpu6050-Expose-channels-from-slave-sensors.patch"
+	${git} "${DIR}/patches/iio/0009-Minor-build-fix.-Not-in-main-tree-yet.patch"
+	${git} "${DIR}/patches/iio/0010-build-bodge-back-me-out.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+		number=10
+		cleanup
+	fi
+
 	#This has to be last...
 	echo "dir: beaglebone/dtbs"
 	#regenerate="enable"
